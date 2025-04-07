@@ -40,10 +40,12 @@ public class Gym {
         visitors.add(visitor);
     }
 
+    public List<Visitor> findVisitors(String name) {
+        return visitors.stream().filter(v -> v.getName().equals(name)).toList();
+    }
+
     public void deleteVisitor(String name) {
-        List<Visitor> visitorsWithName = visitors.stream()
-                .filter(v -> v.getName().equals(name))
-                .toList();
+        List<Visitor> visitorsWithName = findVisitors(name);
 
         if (visitorsWithName.size() > 1) {
             throw new IllegalArgumentException("More than 1 visitor with this name were found");

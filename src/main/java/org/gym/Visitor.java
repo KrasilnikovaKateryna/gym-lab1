@@ -1,23 +1,45 @@
 package org.gym;
 
+import com.fasterxml.jackson.annotation.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
 public class Visitor {
 
     private String name;
-    private List<Membership> memberships = new ArrayList<>();
-    private List<GymVisitRecord> visits = new ArrayList<>();
-    private Map<Coach, List<LocalDateTime>> bookedSessions = new HashMap<>();
 
-    public Visitor(String name) {
+    private List<Membership> memberships = new ArrayList<>();
+
+    private List<GymVisitRecord> visits = new ArrayList<>();
+    private Map<String, List<LocalDateTime>> bookedSessions = new HashMap<>();
+
+    public Visitor(@JsonProperty("name") String name) {
         this.name = name;
     }
+
     public Visitor(String name, Membership membership) {
         this.name = name;
         this.memberships.add(membership);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<Membership> getMemberships() {
+        return memberships;
+    }
+
+    public List<GymVisitRecord> getVisits() {
+        return visits;
+    }
+
+    public Map<String, List<LocalDateTime>> getBookedSessions() {
+        return bookedSessions;
     }
 
     public void addMembership(Membership membership) {
@@ -32,6 +54,7 @@ public class Visitor {
                 .filter(Membership::isActive);
     }
 
+    @JsonIgnore
     public List<Membership> getActiveMemberships() {
         return memberships.stream()
                 .filter(Membership::isActive).toList();
@@ -51,30 +74,32 @@ public class Visitor {
     }
 
     public void bookSession(Coach coach, LocalDateTime dateTime) {
-        bookedSessions.computeIfAbsent(coach, k -> new ArrayList<>());
+        String coachName = coach.getName();
+        bookedSessions.computeIfAbsent(coachName, k -> new ArrayList<>());
 
-        if (bookedSessions.get(coach).contains(dateTime)) {
-            throw new IllegalArgumentException("Coach " + coach.getName() + " is already booked at " + dateTime + " by this visitor.");
+        if (bookedSessions.get(coachName).contains(dateTime)) {
+            throw new IllegalArgumentException("Coach " + coachName + " is already booked at " + dateTime + " by this visitor.");
         }
 
         coach.scheduleSession(dateTime, this);
-        bookedSessions.get(coach).add(dateTime);
+        bookedSessions.get(coachName).add(dateTime);
     }
 
     public void removeSession(Coach coach, LocalDateTime dateTime) {
-        List<LocalDateTime> sessions = bookedSessions.get(coach);
+        String coachName = coach.getName();
+        List<LocalDateTime> sessions = bookedSessions.get(coachName);
         if (sessions != null) {
             sessions.remove(dateTime);
             if (sessions.isEmpty()) {
-                bookedSessions.remove(coach);
+                bookedSessions.remove(coachName);
             }
         }
     }
 
-    public void showCoachSessions() {
+    public void showSessions() {
         System.out.println("Training Sessions for " + name + ":");
-        for (Map.Entry<Coach, List<LocalDateTime>> entry : bookedSessions.entrySet()) {
-            System.out.println("- " + entry.getKey().getName() + ":");
+        for (Map.Entry<String, List<LocalDateTime>> entry : bookedSessions.entrySet()) {
+            System.out.println("- " + entry.getKey() + ":");
             for (LocalDateTime dateTime : entry.getValue()) {
                 System.out.println("  * " + dateTime);
             }
@@ -88,13 +113,10 @@ public class Visitor {
         }
     }
 
+    @JsonIgnore
     public String getInfo() {
         return "Name: " + name + ", membership: " +
                 (hasActiveMembership() ? "active" : "no");
-    }
-
-    public String getName() {
-        return name;
     }
 
     public boolean hasActiveMembership() {

@@ -1,16 +1,21 @@
 package org.gym;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
 public class Coach {
     private String name;
     private String specialization;
     private Map<LocalDateTime, Visitor> trainingSchedule = new HashMap<>();
 
-    public Coach(String name, String specialization) {
+    public Coach(@JsonProperty("name") String name, @JsonProperty("specialization") String specialization) {
         this.name = name;
         this.specialization = specialization;
     }
@@ -23,11 +28,19 @@ public class Coach {
         return specialization;
     }
 
+    public Map<LocalDateTime, Visitor> getTrainingScedule() {
+        return trainingSchedule;
+    }
+
     public void scheduleSession(LocalDateTime dateTime, Visitor visitor) {
         if (trainingSchedule.containsKey(dateTime)) {
             throw new IllegalArgumentException("Coach " + name + " is already booked at " + dateTime);
         }
         trainingSchedule.put(dateTime, visitor);
+    }
+
+    public Map<LocalDateTime, Visitor> getTrainingSchedule() {
+        return trainingSchedule;
     }
 
     public void cancelSession(LocalDateTime dateTime) {

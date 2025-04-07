@@ -1,21 +1,31 @@
 package org.gym;
 
+import com.fasterxml.jackson.annotation.*;
+
 import java.time.LocalDate;
 import java.util.Objects;
 
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "startDate")
 public class Membership {
     private Visitor owner;
+
     private Gym gym;
     private MembershipDuration duration;
     private LocalDate startDate;
     private LocalDate endDate;
 
-    public Membership(Visitor owner, Gym gym, String duration, LocalDate startDate) {
+    @JsonCreator
+    public Membership(@JsonProperty("owner") Visitor owner,
+                      @JsonProperty("gym") Gym gym,
+                      @JsonProperty("duration") String duration,
+                      @JsonProperty("startDate") LocalDate startDate) {
         this.owner = owner;
         this.gym = gym;
         this.duration = MembershipDuration.fromLabel(duration);
         this.startDate = startDate;
         this.endDate = startDate.plusDays(this.duration.getDurationDays());
+        owner.addMembership(this);
+        gym.addVisitor(owner);
     }
 
     public MembershipDuration getDuration() {
@@ -29,17 +39,17 @@ public class Membership {
                 today.isBefore(endDate);
     }
 
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-    public LocalDate getEndDate() {
-        return endDate;
-    }
     public Visitor getOwner() {
         return owner;
     }
     public Gym getGym() {
         return gym;
+    }
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+    public LocalDate getEndDate() {
+        return endDate;
     }
 
     @Override

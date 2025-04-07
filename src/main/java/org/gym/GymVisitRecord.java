@@ -1,13 +1,18 @@
 package org.gym;
 
+import com.fasterxml.jackson.annotation.*;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "dateTime")
 public class GymVisitRecord {
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dateTime;
+
     private Gym gym;
 
-    public GymVisitRecord(Gym gym) {
+    public GymVisitRecord(@JsonProperty("gym") Gym gym) {
         this.dateTime = LocalDateTime.now();
         this.gym = gym;
     }

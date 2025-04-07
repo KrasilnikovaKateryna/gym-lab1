@@ -1,10 +1,16 @@
 package org.gym;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
 public class Gym {
     private int MAX_VISITORS = 999;
     private int MAX_COACHES = 100;
@@ -15,7 +21,7 @@ public class Gym {
     private List<Coach> coaches = new ArrayList<>();
     private List<Visit> visitHistory = new ArrayList<>();
 
-    public Gym(String name, String address) {
+    public Gym(@JsonProperty("name") String name, @JsonProperty("address") String address) {
         this.name = name;
         this.address = address;
     }
@@ -104,6 +110,7 @@ public class Gym {
         return address;
     }
 
+    @JsonIgnore
     public String getInfo() {
         return "Name: " + name + ", address: " + address;
     }

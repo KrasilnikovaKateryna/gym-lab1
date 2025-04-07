@@ -63,6 +63,15 @@ public class Gym {
         }
     }
 
+    public void deleteVisitor(String name, int index) {
+        List<Visitor> visitorsWithName = findVisitors(name);
+        Visitor visitor = visitorsWithName.get(index);
+        boolean removed = visitors.remove(visitor);
+        if (!removed) {
+            throw new IllegalArgumentException("Visitor not found in the gym");
+        }
+    }
+
     public void addCoach(Coach coach) {
         if (coaches.size() >= MAX_COACHES) {
             throw new IllegalStateException("Max number of coaches is " + MAX_COACHES);

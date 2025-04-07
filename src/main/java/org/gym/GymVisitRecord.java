@@ -1,6 +1,7 @@
 package org.gym;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class GymVisitRecord {
     private LocalDateTime dateTime;
@@ -17,6 +18,19 @@ public class GymVisitRecord {
 
     public Gym getGym() {
         return gym;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GymVisitRecord visit)) return false;
+        return Objects.equals(dateTime, visit.dateTime)
+                && Objects.equals(gym, visit.gym);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dateTime, gym);
     }
 
     @Override

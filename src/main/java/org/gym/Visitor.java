@@ -3,6 +3,7 @@ package org.gym;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Visitor {
 
@@ -26,7 +27,26 @@ public class Visitor {
         this.memberships.add(membership);
     }
 
+    private Stream<Membership> _getActiveMemberships() {
+        return memberships.stream()
+                .filter(Membership::isActive);
+    }
+
+    public List<Membership> getActiveMemberships() {
+        return memberships.stream()
+                .filter(Membership::isActive).toList();
+    }
+
     public void visitGym(Gym gym) {
+        boolean hasActiveMembershipInThisGym = _getActiveMemberships()
+                .anyMatch(m -> m.getGym().equals(gym));
+
+        if (!hasActiveMembershipInThisGym) {
+            throw new IllegalStateException("Visitor does not have an active membership in this gym.");
+        }
+
+        Visit fullVisit = new Visit(this, gym);
+        gym.addVisit(fullVisit);
         visits.add(new GymVisitRecord(gym));
     }
 
@@ -34,9 +54,10 @@ public class Visitor {
         bookedSessions.computeIfAbsent(coach, k -> new ArrayList<>());
 
         if (bookedSessions.get(coach).contains(dateTime)) {
-            throw new IllegalArgumentException("Coach " + coach.getName() + " is training at " + dateTime);
+            throw new IllegalArgumentException("Coach " + coach.getName() + " is already booked at " + dateTime + " by this visitor.");
         }
 
+        coach.scheduleSession(dateTime, this);
         bookedSessions.get(coach).add(dateTime);
     }
 

@@ -21,6 +21,10 @@ public class Gym {
     }
 
     public void addVisit(Visit visit) {
+        long countVisits = visitHistory.stream().filter(v -> v.equals(visit)).count();
+        if (countVisits != 0) {
+            throw new IllegalArgumentException("You cannot add same visit twice");
+        }
         visitHistory.add(visit);
     }
 

@@ -1,54 +1,62 @@
 package org.gym;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "dateTime")
+/**
+ * Храним дату визита и hashCode посетителя, а также зал (gymHash).
+ * Это аналог старого Visit(Visitor, Gym), но без рекурсии.
+ */
 public class Visit {
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dateTime;
+    private int visitorHash;
+    private int gymHash; // Укажем, в какой зал
 
-    private Visitor visitor;
-    private Gym gym;
-
-    public Visit(@JsonProperty("visitor") Visitor visitor, @JsonProperty("gym") Gym gym) {
+    public Visit(Visitor visitor, Gym gym) {
         this.dateTime = LocalDateTime.now();
-        this.visitor = visitor;
-        this.gym = gym;
+        this.visitorHash = visitor.hashCode();
+        this.gymHash = gym.hashCode();
+    }
+
+    public Visit(LocalDateTime dateTime, int visitorHash, int gymHash) {
+        this.dateTime = dateTime;
+        this.visitorHash = visitorHash;
+        this.gymHash = gymHash;
     }
 
     public LocalDateTime getDateTime() {
         return dateTime;
     }
 
-    public Gym getGym() {
-        return gym;
+    public int getVisitorHash() {
+        return visitorHash;
     }
 
-    public Visitor getVisitor() {
-        return visitor;
+    public int getGymHash() {
+        return gymHash;
+    }
+
+    /**
+     * Для уникальности возьмём hash(dateTime, visitorHash, gymHash).
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(dateTime, visitorHash, gymHash);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Visit visit)) return false;
-        return Objects.equals(dateTime, visit.dateTime)
-                && Objects.equals(visitor, visit.visitor) && Objects.equals(gym, visit.gym);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(dateTime, visitor);
+        if (!(o instanceof Visit that)) return false;
+        return this.hashCode() == that.hashCode();
     }
 
     @Override
     public String toString() {
-        return "Date: " + dateTime + "Visitor: " + visitor.getName() + "Gym: " + gym.getInfo();
+        return "Visit {hash=" + this.hashCode()
+                + ", dateTime=" + dateTime
+                + ", visitorHash=" + visitorHash
+                + ", gymHash=" + gymHash
+                + '}';
     }
 }

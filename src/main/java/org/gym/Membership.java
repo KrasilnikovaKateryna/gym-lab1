@@ -1,51 +1,50 @@
 package org.gym;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 import java.util.Objects;
 
-/**
- * Membership:
- *  - хранит visitorHash, gymHash
- *  - duration, startDate, endDate
- *  - без рекурсии (только int-хэши вместо ссылок на объекты)
- */
+
 public class Membership {
-    private int visitorHash;
-    private int gymHash; // Чтобы знать, к какому залу относится абонемент
+    private String visitorPhone;
+    private String gymName;
 
     private MembershipDuration duration;
     private LocalDate startDate;
     private LocalDate endDate;
 
-    /**
-     * Конструктор: строим на основе Visitor, Gym, параметров абонемента.
-     * Сразу добавляем membership в Visitor (чтобы логика была похожа на «старую»).
-     */
+    @JsonIgnore
     public Membership(Visitor visitor, Gym gym, String durationLabel, LocalDate startDate) {
-        this.visitorHash = visitor.hashCode();
-        this.gymHash = gym.hashCode();
+        this.visitorPhone = visitor.getPhone();
+        this.gymName = gym.getName();
         this.duration = MembershipDuration.fromLabel(durationLabel);
         this.startDate = startDate;
         this.endDate = startDate.plusDays(this.duration.getDurationDays());
 
-        // После создания добавим этот membership в visitor
         visitor.addMembership(this);
     }
 
-    public Membership(int visitorHash, int gymHash, String durationLabel, LocalDate startDate) {
-        this.visitorHash = visitorHash;
-        this.gymHash = gymHash;
+    @JsonCreator
+    public Membership(@JsonProperty("visitor") String visitorPhone,
+                      @JsonProperty("gym") String gymName,
+                      @JsonProperty("duration") String durationLabel,
+                      @JsonProperty("startDate") LocalDate startDate) {
+        this.visitorPhone = visitorPhone;
+        this.gymName = gymName;
         this.duration = MembershipDuration.fromLabel(durationLabel);
         this.startDate = startDate;
         this.endDate = startDate.plusDays(this.duration.getDurationDays());
     }
 
-    public int getVisitorHash() {
-        return visitorHash;
+    public String getVisitorPhone() {
+        return visitorPhone;
     }
 
-    public int getGymHash() {
-        return gymHash;
+    public String getGymName() {
+        return gymName;
     }
 
     public MembershipDuration getDuration() {
@@ -67,13 +66,9 @@ public class Membership {
                 && today.isBefore(endDate);       // today < endDate
     }
 
-    /**
-     * Переопределяем hashCode как уникальный ID Membership-а
-     * (на основе visitorHash, gymHash и startDate).
-     */
     @Override
     public int hashCode() {
-        return Objects.hash(visitorHash, gymHash, startDate);
+        return Objects.hash(visitorPhone, gymName, startDate);
     }
 
     @Override
@@ -86,8 +81,8 @@ public class Membership {
     @Override
     public String toString() {
         return "Membership {hash=" + this.hashCode()
-                + ", visitorHash=" + visitorHash
-                + ", gymHash=" + gymHash
+                + ", visitor=" + visitorPhone
+                + ", gym=" + gymName
                 + ", duration=" + duration.getLabel()
                 + ", active=" + isActive()
                 + ", startDate=" + startDate

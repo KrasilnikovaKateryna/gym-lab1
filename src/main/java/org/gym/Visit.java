@@ -1,47 +1,41 @@
 package org.gym;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-/**
- * Храним дату визита и hashCode посетителя, а также зал (gymHash).
- * Это аналог старого Visit(Visitor, Gym), но без рекурсии.
- */
+
 public class Visit {
     private LocalDateTime dateTime;
-    private int visitorHash;
-    private int gymHash; // Укажем, в какой зал
+    private String visitorPhone;
 
-    public Visit(Visitor visitor, Gym gym) {
+    @JsonIgnore
+    public Visit(Visitor visitor) {
         this.dateTime = LocalDateTime.now();
-        this.visitorHash = visitor.hashCode();
-        this.gymHash = gym.hashCode();
+        this.visitorPhone = visitor.getPhone();
     }
 
-    public Visit(LocalDateTime dateTime, int visitorHash, int gymHash) {
+    @JsonCreator
+    public Visit(@JsonProperty("dateTime") LocalDateTime dateTime,
+                 @JsonProperty("visitorHash") String visitorPhone) {
         this.dateTime = dateTime;
-        this.visitorHash = visitorHash;
-        this.gymHash = gymHash;
+        this.visitorPhone = visitorPhone;
     }
 
     public LocalDateTime getDateTime() {
         return dateTime;
     }
 
-    public int getVisitorHash() {
-        return visitorHash;
+    public String getVisitorPhone() {
+        return visitorPhone;
     }
 
-    public int getGymHash() {
-        return gymHash;
-    }
-
-    /**
-     * Для уникальности возьмём hash(dateTime, visitorHash, gymHash).
-     */
     @Override
     public int hashCode() {
-        return Objects.hash(dateTime, visitorHash, gymHash);
+        return Objects.hash(dateTime, visitorPhone);
     }
 
     @Override
@@ -55,8 +49,7 @@ public class Visit {
     public String toString() {
         return "Visit {hash=" + this.hashCode()
                 + ", dateTime=" + dateTime
-                + ", visitorHash=" + visitorHash
-                + ", gymHash=" + gymHash
+                + ", visitor=" + visitorPhone
                 + '}';
     }
 }

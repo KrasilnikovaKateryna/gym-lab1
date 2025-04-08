@@ -24,7 +24,8 @@ public enum MembershipDuration {
 
     public static MembershipDuration fromLabel(String input) {
         for (MembershipDuration type : values()) {
-            if (type.label.equalsIgnoreCase(input.trim())) {
+            if (type.label.equalsIgnoreCase(input.trim()) ||
+                    type.name().equalsIgnoreCase(input.trim())) {
                 return type;
             }
         }

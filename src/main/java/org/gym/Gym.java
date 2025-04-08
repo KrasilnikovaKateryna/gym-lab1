@@ -1,15 +1,11 @@
 package org.gym;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Gym:
- *  - name, address
- *  - списки хэшей посетителей (visitorHashes) и тренеров (coachHashes)
- *  - история визитов (List<Visit>)
- */
+import java.util.*;
+
 public class Gym {
     private static final int MAX_VISITORS = 999;
     private static final int MAX_COACHES = 100;
@@ -17,22 +13,20 @@ public class Gym {
     private String name;
     private String address;
 
-    // Храним hashCode посетителей
-    private List<Integer> visitorHashes = new ArrayList<>();
-    // Храним hashCode тренеров
-    private List<Integer> coachHashes = new ArrayList<>();
-    // История визитов
+    @JsonIgnore
+    private Map<String, Visitor> allVisitors = new HashMap<>();
+
+    @JsonIgnore
+    private  Map<String, Coach> allCoaches = new HashMap<>();
+
     private List<Visit> visitHistory = new ArrayList<>();
 
-    public Gym(String name, String address) {
+    @JsonCreator
+    public Gym(@JsonProperty("name") String name, @JsonProperty("address") String address) {
         this.name = name;
         this.address = address;
     }
 
-    /**
-     * Добавить визит в историю.
-     * (В каждом Visit хранится visitorHash, gymHash).
-     */
     public void addVisit(Visit visit) {
         if (visitHistory.contains(visit)) {
             throw new IllegalArgumentException("You cannot add the same visit twice");
@@ -40,57 +34,88 @@ public class Gym {
         visitHistory.add(visit);
     }
 
-    /**
-     * Зарегистрировать посетителя (visitor.hashCode()) в зале.
-     */
     public void addVisitor(Visitor visitor) {
-        int vHash = visitor.hashCode();
-        if (visitorHashes.size() >= MAX_VISITORS) {
+        if (allVisitors.size() >= MAX_VISITORS) {
             throw new IllegalStateException("Max number of visitors is " + MAX_VISITORS);
         }
-        if (!visitorHashes.contains(vHash)) {
-            visitorHashes.add(vHash);
+        if (allVisitors.get(visitor.getPhone()) != null) {
+            throw new IllegalArgumentException("Visitor with that phone " + visitor.getPhone() + " already exists");
         }
+        allVisitors.put(visitor.getPhone(), visitor);
     }
 
-    /**
-     * Зарегистрировать тренера.
-     */
     public void addCoach(Coach coach) {
-        int cHash = coach.hashCode();
-        if (coachHashes.size() >= MAX_COACHES) {
-            throw new IllegalStateException("Max number of coaches is " + MAX_COACHES);
+        if (allCoaches.size() >= MAX_COACHES) {
+            throw new IllegalStateException("Max number of coaches is " + MAX_VISITORS);
         }
-        if (!coachHashes.contains(cHash)) {
-            coachHashes.add(cHash);
+        if (allCoaches.get(coach.getPhone()) != null) {
+            throw new IllegalArgumentException("Visitor with that phone " + coach.getPhone() + " already exists");
+        }
+        allCoaches.put(coach.getPhone(), coach);
+    }
+
+    public void removeVisitor(String phone) {
+        Visitor removed = allVisitors.remove(phone);
+        if (removed == null) {
+            throw new IllegalArgumentException("Visitor with that phone " + phone + " not found");
         }
     }
 
-    /**
-     * Удалить посетителя по хэш-коду (если надо).
-     */
-    public void removeVisitor(int visitorHash) {
-        visitorHashes.remove(Integer.valueOf(visitorHash));
+    public void removeCoach(String phone) {
+        Coach removed = allCoaches.remove(phone);
+        if (removed == null) {
+            throw new IllegalArgumentException("Coach with that phone " + phone + " not found");
+        }
     }
 
-    /**
-     * Удалить тренера по хэш-коду.
-     */
-    public void removeCoach(int coachHash) {
-        coachHashes.remove(Integer.valueOf(coachHash));
+    @JsonProperty("visitors")
+    public Map<String, String> getVisitorsPhonesNames() {
+        Map<String, String> map = new HashMap<>();
+        for (Map.Entry<String, Visitor> entry : allVisitors.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().getName());
+        }
+        return map;
     }
 
-    // == Геттеры/Сеттеры ==
+    @JsonProperty("visitors")
+    public void setVisitorsPhonesNames(Map<String, String> visitorsMap) {
+        for (Map.Entry<String, String> entry : visitorsMap.entrySet()) {
+            String phone = entry.getKey();
+            String name = entry.getValue();
+            Visitor v = new Visitor(phone, name);
+            allVisitors.put(phone, v);
+        }
+    }
+
+    @JsonProperty("coaches")
+    public Map<String, String> getCoachesPhonesNames() {
+        Map<String, String> map = new HashMap<>();
+        for (Map.Entry<String, Coach> entry : allCoaches.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().getName());
+        }
+        return map;
+    }
+
+    @JsonProperty("coaches")
+    public void setCoachesPhonesNames(Map<String, String> coachesMap) {
+        for (Map.Entry<String, String> entry : coachesMap.entrySet()) {
+            String phone = entry.getKey();
+            String name = entry.getValue();
+            Coach c = new Coach(phone, name, "Unknown");
+            allCoaches.put(phone, c);
+        }
+    }
+
+    public Map<String, Visitor> getAllVisitors() {
+        return allVisitors;
+    }
+
+    public Map<String, Coach> getAllCoaches() {
+        return allCoaches;
+    }
+
     public List<Visit> getVisitHistory() {
         return visitHistory;
-    }
-
-    public List<Integer> getVisitorHashes() {
-        return visitorHashes;
-    }
-
-    public List<Integer> getCoachHashes() {
-        return coachHashes;
     }
 
     public String getName() {
@@ -101,6 +126,7 @@ public class Gym {
         return address;
     }
 
+    @JsonIgnore
     public String getInfo() {
         return "Gym: " + name + ", address: " + address;
     }
@@ -122,8 +148,8 @@ public class Gym {
         return "Gym {hash=" + this.hashCode()
                 + ", name='" + name + '\''
                 + ", address='" + address + '\''
-                + ", visitorsCount=" + visitorHashes.size()
-                + ", coachesCount=" + coachHashes.size()
+                + ", visitorsCount=" + allVisitors.size()
+                + ", coachesCount=" + allCoaches.size()
                 + '}';
     }
 }

@@ -10,215 +10,165 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class GymTests {
 
-    private Gym gym;
     private Visitor visitor;
     private Coach coach;
+    private Gym gym;
+
+    private String visitorPhone;
+    private String coachPhone;
 
     @BeforeEach
-    public void setUp() {
-        gym = new Gym("Test Gym", "Main St.");
-        visitor = new Visitor("John");
-        coach = new Coach("Anna", "Cardio");
-        gym.addVisitor(visitor);
-        gym.addCoach(coach);
+    void setUp() {
+        visitor = new Visitor("+3801111111", "John");
+        coach = new Coach("+380222222222", "Alice", "Yoga");
+        gym = new Gym("Test Gym", "Main Street");
+
+        visitorPhone = visitor.getPhone();
+        coachPhone = coach.getPhone();
     }
 
     @Test
-    public void testAddVisitor() {
-        Visitor v = new Visitor("Mike");
-        gym.addVisitor(v);
-        assertTrue(gym.getVisitors().contains(v));
-    }
+    void testVisitorAddMembershipAndGetActiveMemberships() {
+        assertTrue(visitor.getActiveMemberships().isEmpty());
+        assertFalse(visitor.hasActiveMembership());
 
-    @Test
-    public void testDeleteVisitorByName() {
-        gym.deleteVisitor("John");
-        assertFalse(gym.getVisitors().stream().anyMatch(v -> v.getName().equals("John")));
-    }
+        Membership mem = new Membership(visitor, gym, "1 month", LocalDate.now());
 
-    @Test
-    public void testDeleteVisitorByNameNotFoundThrowsException() {
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> gym.deleteVisitor("NotFoundName"));
-        assertEquals("No visitors with this name were found", ex.getMessage());
-    }
-
-    @Test
-    public void testDeleteVisitorByNameMoreThanOneFoundThrowsException() {
-        Visitor visitor1 = new Visitor("Kate");
-        Visitor visitor2 = new Visitor("Kate");
-        gym.addVisitor(visitor1);
-        gym.addVisitor(visitor2);
-
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> gym.deleteVisitor("Kate"));
-        assertEquals("More than 1 visitor with this name were found", ex.getMessage());
-    }
-
-    @Test
-    public void testDeleteVisitorByObject() {
-        gym.deleteVisitor(visitor);
-        assertFalse(gym.getVisitors().contains(visitor));
-    }
-
-    @Test
-    public void testDeleteVisitorByObjectNotFoundThrowsException() {
-        Visitor v = new Visitor("NotFoundName");
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> gym.deleteVisitor(v));
-        assertEquals("Visitor not found in the gym", ex.getMessage());
-    }
-
-
-    @Test
-    public void testAddCoach() {
-        Coach c = new Coach("Bob", "Strength");
-        gym.addCoach(c);
-        assertTrue(gym.getCoaches().contains(c));
-    }
-
-    @Test
-    public void testDeleteCoachByName() {
-        gym.deleteCoach("Anna");
-        assertFalse(gym.getCoaches().stream().anyMatch(c -> c.getName().equals("Anna")));
-    }
-
-    @Test
-    public void testDeleteCoachByObject() {
-        gym.deleteCoach(coach);
-        assertFalse(gym.getCoaches().contains(coach));
-    }
-
-    @Test
-    public void testDeleteCoachByObjectNotFoundThrowsException() {
-        Coach c = new Coach("Ghost", "Shadow");
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> gym.deleteCoach(c));
-        assertEquals("Coach not found in the gym", ex.getMessage());
-    }
-
-    @Test
-    public void testVisitGymWithMembership() {
-        Membership m = new Membership(visitor, gym, "1 month", LocalDate.now().minusDays(1));
-
-        visitor.visitGym(gym);
-
-        assertEquals(1, gym.getVisitHistory().size());
+        assertTrue(visitor.getMemberships().contains(mem));
+        assertTrue(visitor.hasActiveMembership());
         assertEquals(1, visitor.getActiveMemberships().size());
     }
 
     @Test
-    public void testVisitGymWithoutMembershipThrowsException() {
+    void testVisitorAddSameMembershipTwiceThrows() {
+        new Membership(visitor, gym, "1 month", LocalDate.now());
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->
+                new Membership(visitor, gym, "1 month", LocalDate.now())
+        );
+        assertTrue(ex.getMessage().contains("This membership already exists."));
+    }
+
+    @Test
+    void testVisitorVisitGymThrowsIfNoActiveMembership() {
         Exception ex = assertThrows(IllegalStateException.class, () -> visitor.visitGym(gym));
         assertEquals("Visitor does not have an active membership in this gym.", ex.getMessage());
     }
 
     @Test
-    public void testBookSession() {
-        LocalDateTime time = LocalDateTime.now().plusDays(1);
-        visitor.bookSession(coach, time);
-        assertEquals(1, coach.getTrainingSchedule().size());
+    void testVisitorVisitGym() {
+        new Membership(visitor, gym, "1 month", LocalDate.now());
+
+        visitor.visitGym(gym);
+
+        assertEquals(1, gym.getVisitHistory().size());
+        Visit v = gym.getVisitHistory().get(0);
+        assertEquals(visitorPhone, v.getVisitorPhone());
     }
 
     @Test
-    public void testBookSessionTimeConflictThrowsException() {
+    void testVisitorBookSession() {
+        gym.addVisitor(visitor);
+        gym.addCoach(coach);
+
         LocalDateTime time = LocalDateTime.now().plusDays(1);
         visitor.bookSession(coach, time);
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> visitor.bookSession(coach, time));
+
+        assertEquals(visitorPhone, coach.getTrainingSchedule().get(time));
+    }
+
+    @Test
+    void testVisitorRemoveSession() {
+        gym.addVisitor(visitor);
+        gym.addCoach(coach);
+
+        LocalDateTime time = LocalDateTime.now().plusDays(1);
+        visitor.bookSession(coach, time);
+
+
+        visitor.removeSession(coach, time);
+        assertFalse(coach.getTrainingSchedule().containsKey(time));
+    }
+
+    @Test
+    void testVisitorBookSessionTimeConflict() {
+        gym.addVisitor(visitor);
+        gym.addCoach(coach);
+
+        LocalDateTime sameTime = LocalDateTime.now().plusDays(1);
+        visitor.bookSession(coach, sameTime);
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->
+                visitor.bookSession(coach, sameTime));
         assertTrue(ex.getMessage().contains("already booked"));
     }
 
     @Test
-    public void testCancelSession() {
-        LocalDateTime time = LocalDateTime.now().plusDays(1);
-        visitor.bookSession(coach, time);
-        coach.cancelSession(time);
-        assertEquals(0, coach.getTrainingSchedule().size());
+    void testCoachScheduleAndCancelSession() {
+        LocalDateTime dt = LocalDateTime.now().plusDays(2);
+
+        coach.scheduleSession(dt, visitorPhone);
+        assertEquals(visitorPhone, coach.getTrainingSchedule().get(dt));
+
+        coach.cancelSession(dt);
+        assertFalse(coach.getTrainingSchedule().containsKey(dt));
     }
 
     @Test
-    public void testCancelNonexistentSessionThrowsException() {
-        LocalDateTime time = LocalDateTime.now().plusDays(1);
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> coach.cancelSession(time));
+    void testCoachCancelNoSuchSessionThrows() {
+        LocalDateTime dt = LocalDateTime.now().plusDays(1);
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->
+                coach.cancelSession(dt));
         assertEquals("There is no training session at this time.", ex.getMessage());
     }
 
     @Test
-    public void testAddMembership() {
-        Membership m = new Membership(visitor, gym, "1 month", LocalDate.now());
-        assertTrue(visitor.getActiveMemberships().contains(m));
+    void testGymAddVisitorAndCoach() {
+        assertTrue(gym.getAllVisitors().isEmpty());
+        assertTrue(gym.getAllCoaches().isEmpty());
+
+        gym.addVisitor(visitor);
+        gym.addCoach(coach);
+
+        assertNotNull(gym.getAllVisitors().get(visitorPhone));
+        assertNotNull(gym.getAllCoaches().get(coachPhone));
     }
 
     @Test
-    public void testAddDuplicateMembershipThrowsException() {
-        Membership m = new Membership(visitor, gym, "1 month", LocalDate.now());
+    void testGymAddVisit() {
+        Visit visit = new Visit(visitor);
+        gym.addVisit(visit);
 
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> visitor.addMembership(m));
-        assertEquals("This membership already exists.", ex.getMessage());
+        assertEquals(1, gym.getVisitHistory().size());
+        assertEquals(visit, gym.getVisitHistory().get(0));
+
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->
+                gym.addVisit(visit));
+        assertTrue(ex.getMessage().contains("cannot add the same visit twice"));
     }
 
     @Test
-    public void testMembershipIsActive() {
-        Membership m = new Membership(visitor, gym, "1 month", LocalDate.now().minusDays(5));
-        assertTrue(m.isActive());
+    void testMembershipIsActive() {
+        Membership membership = new Membership(visitor, gym, "1 month", LocalDate.now());
+        assertTrue(membership.isActive());
     }
 
     @Test
-    public void testMembershipIsNotActive() {
-        Membership m = new Membership(visitor, gym, "1 month", LocalDate.now().minusDays(40));
-        assertFalse(m.isActive());
+    void testMembershipExpired() {
+        Membership membership = new Membership(visitor, gym, "1 month", LocalDate.now().minusDays(40));
+        assertFalse(membership.isActive());
     }
 
     @Test
-    public void testFromLabelValid() {
-        MembershipDuration duration = MembershipDuration.fromLabel("1 month");
-        assertEquals(MembershipDuration.ONE_MONTH, duration);
+    void testMembershipDurationFromLabelValid() {
+        MembershipDuration md = MembershipDuration.fromLabel("3 months");
+        assertEquals(MembershipDuration.THREE_MONTHS, md);
+        assertEquals(90, md.getDurationDays());
     }
 
     @Test
-    public void testFromLabelInvalidThrows() {
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> MembershipDuration.fromLabel("2 months"));
+    void testMembershipDurationFromLabelInvalid() {
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->
+                MembershipDuration.fromLabel("2 months"));
         assertTrue(ex.getMessage().contains("Unexpected membership duration"));
     }
 
-    @Test
-    public void testVisitObjectCreationAndValues() {
-        Visit visit = new Visit(visitor, gym);
-        assertNotNull(visit.getDateTime());
-        assertTrue(visit.toString().contains(visitor.getName()));
-        assertTrue(visit.toString().contains(gym.getName()));
-    }
-
-    @Test
-    public void testVisitEqualityWithSameData() {
-        Visit visit1 = new Visit(visitor, gym);
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException ignored) {}
-
-        Visit visit2 = new Visit(visitor, gym);
-        assertNotEquals(visit1, visit2);
-    }
-
-    @Test
-    public void testGymVisitRecordCreation() {
-        GymVisitRecord record = new GymVisitRecord(gym);
-        assertNotNull(record.getDateTime());
-        assertEquals(gym, record.getGym());
-    }
-
-    @Test
-    public void testGymVisitRecordToStringIncludesGymName() {
-        GymVisitRecord record = new GymVisitRecord(gym);
-        assertTrue(record.toString().contains(gym.getName()));
-    }
-
-    @Test
-    public void testGymVisitRecordEquality() {
-        GymVisitRecord record1 = new GymVisitRecord(gym);
-
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException ignored) {}
-
-        GymVisitRecord record2 = new GymVisitRecord(gym);
-
-        assertNotEquals(record1, record2);
-    }
 }

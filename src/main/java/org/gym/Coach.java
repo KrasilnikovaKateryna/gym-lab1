@@ -77,8 +77,7 @@ public class Coach {
 
     @Override
     public String toString() {
-        return "Coach {hash=" + this.hashCode()
-                + ", name='" + name + '\''
+        return "Coach {name='" + name + '\''
                 + ", specialization='" + specialization + '\''
                 + ", scheduled=" + trainingSchedule.size()
                 + '}';

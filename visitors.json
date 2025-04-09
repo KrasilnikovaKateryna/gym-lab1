@@ -1,0 +1,31 @@
+[ {
+  "phone" : "+380111111111",
+  "name" : "Visitor1",
+  "memberships" : [ {
+    "duration" : "THREE_MONTHS",
+    "startDate" : "2025-04-09",
+    "visitorPhone" : "+380111111111",
+    "gymName" : "Gym1",
+    "endDate" : "2025-07-08",
+    "active" : true
+  } ],
+  "visits" : [ "2025-04-09T12:59:46.1145593" ],
+  "bookedSessions" : {
+    "+380333333333" : [ "2025-04-12T17:00:00", "2025-04-07T15:00:00" ]
+  },
+  "activeMemberships" : [ {
+    "duration" : "THREE_MONTHS",
+    "startDate" : "2025-04-09",
+    "visitorPhone" : "+380111111111",
+    "gymName" : "Gym1",
+    "endDate" : "2025-07-08",
+    "active" : true
+  } ]
+}, {
+  "phone" : "+380222222222",
+  "name" : "Visitor2",
+  "memberships" : [ ],
+  "visits" : [ ],
+  "bookedSessions" : { },
+  "activeMemberships" : [ ]
+} ]

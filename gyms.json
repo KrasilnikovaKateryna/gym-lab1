@@ -1,0 +1,22 @@
+[ {
+  "name" : "Gym3",
+  "address" : "Address3",
+  "visitHistory" : [ {
+    "dateTime" : "2025-04-09T12:59:46.1145593",
+    "visitorPhone" : "+380111111111"
+  } ],
+  "visitors" : {
+    "+380111111111" : "Visitor1"
+  },
+  "coaches" : {
+    "+380333333333" : "Coach1"
+  }
+}, {
+  "name" : "Gym4",
+  "address" : "Address4",
+  "visitHistory" : [ ],
+  "visitors" : {
+    "+380222222222" : "Visitor2"
+  },
+  "coaches" : { }
+} ]
